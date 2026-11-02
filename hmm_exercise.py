@@ -77,3 +77,48 @@ class HMM:
                 best_path = z
 
         return best_path, max_probability, sum
+
+    def viterbi(self, x):
+        v = []
+        back = []
+        v0 = {}
+        for state in self.states:
+            v0[state] = self.log_pi[state] + self.log_e[state][x[0]]
+        v.append(v0)
+        back.append({})
+
+        for i in range(1, len(x)):
+            vi = {}
+            backi = {}
+            for state in self.states:
+                max_score = -math.inf
+                best_prev_state = None
+
+                for prev_state in self.states:
+                    score = v[i-1][prev_state] + self.log_a[prev_state][state]
+                    if score > max_score:
+                        max_score = score
+                        best_prev_state = prev_state
+
+                vi[state] = max_score + self.log_e[state][x[i]]
+                backi[state] = best_prev_state
+            v.append(vi)
+            back.append(backi)
+
+        best_last_state = None
+        max_score = -math.inf
+
+        for state, score in v[-1].items():
+            if score > max_score:
+                max_score = score
+                best_last_state = state
+        path_states = [best_last_state]
+        current_state = best_last_state
+        for i in range(len(back) - 1, 0, -1):
+            current_state = back[i][current_state]
+            path_states.append(current_state)
+
+        path_states.reverse()
+        best_path = "".join(path_states)
+
+        return best_path, max_score
